@@ -4,22 +4,28 @@ Exact firmware profile for the Galaxy S23+ on firmware `S916BXXSAFZI1`
 (`samsung/dm2qxxx/dm2q:16/BP4A.251205.006/S916BXXSAFZI1`), kernel
 `5.15.189-android13-8-33413713-abS916BXXSAFZI1`.
 
-## Status
+## Hardware evidence
 
-Offline port derived from the exact CAU FZI1 Image; **not yet
-hardware-validated**. Every constant was re-derived from the recovered
-FZI1 ELF/BTF (see
+The full chain completed on the first attempt on real `SM-S916B` FZI1
+hardware from `adb shell`: tracefs KASLR slide (event id 108), controlled
+32-object `mm_struct` group, shaped order-3 SKB reclaim, MCAST waiter
+write, fake ashmem fops, configfs arbitrary read/write, pipe physical
+read/write, and root UMH (`done=1 root=1 uid=2000->0`, `uid=0(root)
+context=u:r:kernel:s0`, SELinux Permissive). The P0 oracle read-verify
+matched on the same attempt (`p0 physical write status=0 ok=1`),
+confirming the carried `P0_KERNEL_PHYS_LOAD 0x80080000` on the rebuilt
+FZI1 ABL; the P0 profile line re-confirmed `SLIDE_NFULNL_LOGGER_NAME_OFF`,
+`INIT_TASK_OFF`, `random_table[4].data`, and `sysctl_bootid` on the live
+image. Successful boots so far: 1 of 1 attempts.
+
+KernelSU late-load with the FZG1 `ksud-dm2q-S916BXXSAFZG1-kdp` loader pair
+was verified on this FZI1 device: module loads (`Live` in `/proc/modules`)
+and `su -c id` returns `uid=0(root) context=u:r:ksu:s0`. The profile was
+derived offline from the recovered FZI1 ELF/BTF — every constant
+re-derived and cross-checked (see
 [`../../docs/SM-S916B-S916BXXSAFZI1.md`](../../docs/SM-S916B-S916BXXSAFZI1.md)
-for the full drift record and verification method). The exploit chain is
-the hardware-proven FZH3 MCAST route, unchanged in structure.
-
-KernelSU late-load reuses the FZG1 loader pair
-`kernelsu/ksud-dm2q-S916BXXSAFZG1-kdp`: all 200 undefined module symbols
-resolve against the recovered FZI1 `vmlinux.elf`, and the module-relevant
-ABI layouts (`enum ucount_type`, `task_struct`, `cred`, `ucounts`,
-workqueue structs) are byte-identical between the FZH3 and FZI1 BTF type
-universes. The same binary is already device-tested on FZH3 (see the
-FZH3 record).
+for the drift record and the offline symbol audit behind the cross-build
+module reuse).
 
 ## Files
 
@@ -27,7 +33,7 @@ FZH3 record).
 | --- | --- |
 | `cve-2026-43499-app.so` | `79d46813bb25e91b8cfa08786cc194294b998f8ae170ccf2b9d67aec35430fea` |
 | `cve-2026-43499-root` | `375857c5d9a3b425c84decbb243f4abba579993c33ea30086c29fd3a7e8f06f2` |
-| `../../kernelsu/ksud-dm2q-S916BXXSAFZG1-kdp` | `5da5818d36da2d589496f91016078a43f50489e5c98b319db4eaa5ee475b86bd` (cross-build reuse, audited against FZI1, see above) |
+| `../../kernelsu/ksud-dm2q-S916BXXSAFZG1-kdp` | `5da5818d36da2d589496f91016078a43f50489e5c98b319db4eaa5ee475b86bd` (cross-build reuse, audited against FZI1 and device-tested on it, see above) |
 
 ## Build
 
@@ -69,10 +75,6 @@ adb shell "su -c id"
 
 Direct execution of `ksud` from `/data/local/tmp` is Defex-killed
 (`Killed`, rc=137); only the logcat-disguised invocation inside a private
-mount namespace loads the module. Expect retries: failed attempts leave PI
-state behind and the runner refuses in-boot retries by design.
-
-If the tracefs slide or P0 oracle stage fails cleanly on hardware, capture
-the log before rebooting: a P0 fingerprint mismatch would indicate the
-rebuilt FZI1 `abl.elf` loads the Image at a physical base other than the
-carried-over `0x80080000` (see the porting record's P0 section).
+mount namespace loads the module. Expect retries on later boots: failed
+attempts leave PI state behind and the runner refuses in-boot retries by
+design.

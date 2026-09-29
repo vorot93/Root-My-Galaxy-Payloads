@@ -2,11 +2,18 @@
 
 ## Status
 
-Offline port of the hardware-proven FZH3 profile to the September 2026
-`S916BXXSAFZI1` CAU firmware. Every constant was re-derived from the
-recovered FZI1 ELF/BTF and cross-checked against an identically recovered
-FZH3 set (which reproduced every published FZH3 constant exactly).
-Hardware validation is pending; the profile is not in the support feed.
+The FZI1 profile completed the full chain on the first attempt on real
+`SM-S916B` hardware: tracefs KASLR slide (event id 108), MCAST waiter
+write, configfs arbitrary read/write, pipe physical read/write, and root
+UMH (`uid=0(root) context=u:r:kernel:s0`, SELinux Permissive), plus the
+P0 oracle read-verify (`p0 physical write status=0 ok=1`), which confirms
+the carried `P0_KERNEL_PHYS_LOAD 0x80080000` on the rebuilt FZI1 ABL.
+KernelSU late-load followed with granted `su` under enforcing
+(`uid=0(root) context=u:r:ksu:s0`); success rate 1 of 1 boots. Every
+constant was re-derived offline from the recovered FZI1 ELF/BTF and
+cross-checked against an identically recovered FZH3 set (which
+reproduced every published FZH3 constant exactly). The profile is not in
+the support feed.
 
 ## Exact target
 
@@ -131,14 +138,19 @@ dm3q-S9180, gts9/gts9u profiles, all `0x80080000`); the identical kernel
 Image header (`text_offset 0`); and the failure mode — a wrong base
 produces a P0 fingerprint mismatch at the read-verify gate and aborts
 cleanly, like the documented FZG1-payload-on-FZH3 control failure, never a
-blind write. Hardware P0 validation is the final gate for this port.
+blind write. Hardware validation has since passed: the first FZI1 attempt
+matched the P0 fingerprint and completed the physical write
+(`p0 physical write status=0 ok=1`), confirming the carried base on the
+rebuilt FZI1 ABL.
 
 ## KernelSU handoff
 
 The published FZG1 loader pair `ksud-dm2q-S916BXXSAFZG1-kdp` (kallsyms
-aware, empty `__versions`, runtime relocation by name) is reused. Audit
-against the recovered FZI1 `vmlinux.elf`: **all 200 undefined module
-symbols resolve**, and the module's compile-time ABI assumptions
+aware, empty `__versions`, runtime relocation by name) is reused and was
+verified on this FZI1 device: module `Live` in `/proc/modules` and granted
+`su -c id` → `u:r:ksu:s0` under enforcing. Audit against the recovered
+FZI1 `vmlinux.elf`: **all 200 undefined module symbols resolve**, and the
+module's compile-time ABI assumptions
 (`enum ucount_type`, `task_struct`, `cred`, `ucounts`, workqueue layouts)
 are covered by the byte-identical BTF type universe. The FZG1 module's
 vermagic embeds `…-abS916BXXSAFZG1`; the manual loader ignores vermagic,
@@ -151,5 +163,4 @@ record.
 ## Artifacts and commands
 
 See [`../artifacts/dm2q-S916BXXSAFZI1/README.md`](../artifacts/dm2q-S916BXXSAFZI1/README.md)
-for hashes, the exact per-boot commands, and the hardware-validation
-checklist.
+for hashes, the exact per-boot commands, and the hardware evidence.
