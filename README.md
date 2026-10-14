@@ -16,6 +16,7 @@ It intentionally does not contain Android application source code.
 | Payload | Compatible models | Kernel version | Status |
 | --- | --- | --- | --- |
 | `galaxy-s25-series-2026-06-07` | Galaxy S25, S25+, S25 Edge, and S25 Ultra regional models | `6.6.98` | Device-tested |
+| `pa2q-S936BXXUCDZIF` | Galaxy S25+ `SM-S936B` (One UI 9) | `6.6.127` | Device-tested |
 | `e3q-S928USQS6DZF2` | Galaxy S24 Ultra `SM-S928U1` | `6.1.145` | Device-tested |
 | `e3q-S9280ZCS6DZF2` | Galaxy S24 Ultra China `SM-S9280` | `6.1.145` | Device-tested |
 | `e2s-S926BXXUEDZDR` | Galaxy S24+ `SM-S926B` | `6.1.157` | Device-tested |
@@ -60,6 +61,7 @@ make TARGET=a53x-A536EXXSNGZG3 ANDROID_NDK_HOME=/path/to/android-ndk
 make TARGET=dm3q-S9180ZHS8FZF5 ANDROID_NDK_HOME=/path/to/android-ndk
 make TARGET=q4q-F9360ZCSAIZF1 ANDROID_NDK_HOME=/path/to/android-ndk
 make TARGET=dm2q-S916BXXSAFZG1 ANDROID_NDK_HOME=/path/to/android-ndk
+make TARGET=pa2q-S936BXXUCDZIF ANDROID_NDK_HOME=/path/to/android-ndk
 ```
 
 Outputs:
@@ -95,6 +97,11 @@ The SM-A366W AYG1 device validation is in
 The SM-F9360 AIZF1 (5.10, locked-BL, no-LTO clang-12 module) validation is in
 [`docs/SM-F9360-F9360ZCSAIZF1.md`](docs/SM-F9360-F9360ZCSAIZF1.md).
 The experimental SM-S916B FZG1 shell port and its exact hardware evidence are in [`docs/SM-S916B-S916BXXSAFZG1.md`](docs/SM-S916B-S916BXXSAFZG1.md).
+The SM-S936B DZIF (One UI 9, 6.6.127, tracefs+phys-alias route) porting
+record and on-device validation are in
+[`docs/SM-S936B-S936BXXUCDZIF.md`](docs/SM-S936B-S936BXXUCDZIF.md); the
+per-boot ADB chain is automated in
+[`tools/root-pa2q-S936BXXUCDZIF.sh`](tools/root-pa2q-S936BXXUCDZIF.sh).
 The SM-A536E GZG3 device validation is in
 [`docs/SM-A536E-A536EXXSNGZG3.md`](docs/SM-A536E-A536EXXSNGZG3.md).
 The SM-S9280 China (CHC) DZF2 port and validation record is in

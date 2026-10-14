@@ -8,8 +8,8 @@ between KMIs.
 
 | File | Target | KMI | Purpose |
 | --- | --- | --- | --- |
-| `android15-6.6_kernelsu-s25u-kdp.ko` | `SM-S938N`, `S938NKSUACZF1` | `android15-6.6` | Standalone reference module from the previously deployed S25U build |
-| `ksud-s25u-kdp` | `SM-S938N`, `S938NKSUACZF1` | `android15-6.6` | Late-load binary embedding the 6.6 module |
+| `android15-6.6_kernelsu-s25u-kdp.ko` | `SM-S938N`, `S938NKSUACZF1`; `SM-S936B`, `S936BXXUCDZIF` | `android15-6.6` | Standalone reference module from the previously deployed S25U build (vermagic `6.6.127-4k-g46a034eca005-dirty`, zero-length `__versions`); all 222 undefined symbols resolve in the recovered S936B DZIF `vmlinux`; hardware-validated on S936B DZIF 2026-10-15 |
+| `ksud-s25u-kdp` | `SM-S938N`, `S938NKSUACZF1`; `SM-S936B`, `S936BXXUCDZIF` | `android15-6.6` | Late-load binary embedding the 6.6 module (rust-embed/include_flate; embedded module byte-identical to the standalone `.ko`); device-tested late-load on S936B DZIF (module Live, `su` under `u:r:ksu:s0`) |
 | `android15-6.6_kernelsu-A566EXXSCCZG6-kdp.ko` | `SM-A566E`, `A566EXXSCCZG6` | `android15-6.6` | Exact A56 module with target `vermagic`, audited for manual relocation; live text patching disabled for Exynos EL2 |
 | `ksud-A566EXXSCCZG6-kdp` | Same exact A56 build | `android15-6.6` | Device-tested late-load binary embedding the A56 6.6 no-patch-text module |
 | `android15-6.6_kernelsu-A366WVLS3AYG1-kdp.ko` | `SM-A366W`, `A366WVLS3AYG1` | `android15-6.6` | Exact A36 module with target `vermagic`, audited for manual relocation; live text patching disabled for Samsung KDP/RKP |

