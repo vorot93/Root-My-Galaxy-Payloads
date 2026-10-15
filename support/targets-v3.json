@@ -86,11 +86,11 @@
       ],
       "kernelVersions": ["6.6.127"],
       "exploit": {
-        "url": "https://raw.githubusercontent.com/BuSung-dev/Root-My-Galaxy-Payloads/main/artifacts/pa2q-S936BXXUCDZIF/cve-2026-43499-app.so",
+        "url": "https://raw.githubusercontent.com/vorot93/Root-My-Galaxy-Payloads/staging/artifacts/pa2q-S936BXXUCDZIF/cve-2026-43499-app.so",
         "size": 104128
       },
       "kernelsu": {
-        "url": "https://raw.githubusercontent.com/BuSung-dev/Root-My-Galaxy-Payloads/main/kernelsu/ksud-s25u-kdp",
+        "url": "https://raw.githubusercontent.com/vorot93/Root-My-Galaxy-Payloads/staging/kernelsu/ksud-s25u-kdp",
         "size": 6407096
       }
     },
